@@ -191,7 +191,6 @@ def _check_anthropic_tool_pairs(
         if not isinstance(msg, dict):
             continue
         content = msg.get("content")
-        role = msg.get("role")
 
         if not isinstance(content, list):
             continue
@@ -207,7 +206,9 @@ def _check_anthropic_tool_pairs(
                 tid = block.get("tool_use_id")
                 if tid in open_tool_ids:
                     del open_tool_ids[tid]
-                elif role == "user":
+                else:
+                    # A tool_result referencing an id we have not seen as an
+                    # open tool_use is invalid regardless of the message role.
                     errors.append(
                         ValidationError(
                             "unmatched_tool_result",

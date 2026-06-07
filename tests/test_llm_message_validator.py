@@ -293,6 +293,26 @@ def test_anthropic_consecutive_same_role_detected():
     assert any(e.code == "consecutive_same_role" for e in result.errors)
 
 
+def test_anthropic_unmatched_tool_result_in_assistant_message():
+    # A tool_result referencing an unknown id must be flagged regardless of
+    # the message role it appears in.
+    msgs = [
+        {"role": "user", "content": "Hi"},
+        {
+            "role": "assistant",
+            "content": [{"type": "tool_result", "tool_use_id": "ghost", "content": "x"}],
+        },
+    ]
+    result = validate(msgs, provider="anthropic")
+    assert any(e.code == "unmatched_tool_result" for e in result.errors)
+
+
+def test_anthropic_strict_raises_first_error():
+    msgs = [{"role": "assistant", "content": "Hi"}]  # must start with user
+    with pytest.raises(ValidationError):
+        validate(msgs, provider="anthropic", strict=True)
+
+
 # ---------------------------------------------------------------------------
 # OpenAI provider
 # ---------------------------------------------------------------------------
